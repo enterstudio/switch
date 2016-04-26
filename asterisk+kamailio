@@ -1,0 +1,205 @@
+Asterisk + Kamailio (http://kb.asipto.com/asterisk:realtime:kamailio-4.0.x-asterisk-11.3.0-astdb)
+Usamos las imagenes
+
+
+192.168.0.100   db01
+192.168.0.110   asterisk01
+192.168.0.120   kamailio01
+
+
+Arrancar los contenedores:
+- docker run -it --name=asterisk01 --ip=192.168.0.110 --net=lan local/asterisk:11.21 /bin/bash
+- docker run -it --name=kamailio01 --net=lan --ip=192.168.0.120 local/kamailio /bin/bash
+
+Damos acceso a la base de datos al usuario kamailio_super.
+GRANT ALL ON *.* to kamailio_super@kamailio01 IDENTIFIED BY 'password' WITH GRANT OPTION;
+
+Creamos la base de datos desde kamailio: kamdbctl create
+
+Creamos la base de datos asterisk_db (usamos la sentencia sql que aparece el tutorial pero eliminamos la linea donde se crea la base de datos y  y el usuario para gestionarla asterisk_user.
+GRANT ALL ON asterisk_db.* TO asterisk_user@asterisk01 IDENTIFIED BY 'asteriskpwd';
+GRANT ALL ON asterisk_db.* TO asterisk_user@kamailio01 IDENTIFIED BY 'asteriskpwd';
+
+Editamos el archivo /etc/odbcinst.ini
+
+Editamos el archivo /etc/odbc.ini
+Description = MySQL connection to 'asterisk' database 
+Trace = Off
+TraceFile = stderr
+Driver = MySQL
+SERVER = db01 
+USER = asterisk_user
+PASSWORD = asteriskpwd 
+PORT = 3306
+DATABASE = asterisk_db
+
+Editamos el archivo /etc/asterisk/res_odbc.conf
+[asterisk]
+enabled => yes
+dsn => asterisk-connector
+username => asterisk_user 
+password => asteriskpwd 
+pooling => no
+limit => 1
+pre-connect => yes
+
+Editamos el archivo /etc/asterisk/extconfig.conf y añadimos al final:
+sipusers => odbc,asterisk_db,sipusers
+sippeers => odbc,asterisk_db,sipusers
+sipregs => odbc,asterisk_db,sipregs
+voicemail => odbc,asterisk_db,voicemail
+voicemessages => odbc,asterisk_db,voicemail_messages
+
+
+Editamos el archivo /etc/asterisk/sip.conf
+bindaddr=192.168.0.110:5060
+tcpenable=yes
+videosupport=yes
+rtp_engine=asterisk
+localnet=192.168.0.0/255.255.255.0
+directmedia=off
+rtcachefriends=yes
+
+
+Editamos el archivo /etc/asterisk/extensions.conf
+; our phones use 3 digit extensions, starting with 1
+exten => _1XX,1,Dial(SIP/${EXTEN})
+exten => _1XX,n,Voicemail(${EXTEN},u)
+exten => _1XX,n,Hangup
+exten => _1XX,101,Voicemail(${EXTEN},b)
+exten => _1XX,102,Hangup
+
+Verificamos la conectividad con la base de datos: echo "select 1" | isql -v asterisk-connector
+
+Editamos el archivo /etc/kamailio/kamailio.cfg (usamos como base el del tutorial y añadimos las modificaciones siguientes:
+#!define DBURL "mysql://kamailio_rw:kamailiorw@db01/kamailio_db"
+#!define DBASTURL "mysql://asterisk_user:asteriskpwd@db01/asterisk_db"
+listen=udp:192.168.0.120:5060 advertise 10.200.3.16:5060
+#!ifdef WITH_ASTERISK
+asterisk.bindip = "192.168.0.110" desc "Asterisk IP Address"
+asterisk.bindport = "5060" desc "Asterisk Port"
+kamailio.bindip = "192.168.0.120" desc "Kamailio IP Address"
+kamailio.bindport = "5060" desc "Kamailio Port"
+#!endif
+modparam("tls", "config", "/usr/kamailio/tls.cfg")
+
+Arrancamos los procesos:
+1. Asteriskrtpproxy -A PUBLICIP -F -l PRIVATEIP -m 20000 -M 30000 -s udp:*:7722 -d INFO
+asterisk -cvvvvv
+
+2. Kamailio 
+/usr/sbin/kamailio -P /var/run/kamailio.pid -m 64 -M 8 -u kamailio -g kamailio -DD -E -e
+
+
+2.1 Instalamos el paquete rtpproxy para configurarlo.
+Lo descargamos de wget http://dl.fedoraproject.org/pub/epel/7/x86_64/r/rtpproxy-2.0.0-1.el7.x86_64.rpm e insalamos yum install -y gsm-devel.x86_64
+Creamos el archivo de arranque /etc/init.d/rtpproxy basado en el (https://github.com/sippy/rtpproxy/blob/master/rtpproxy.init) Pero comentamos la linea . /etc/rc.d/init.d/functions y 
+añadimos la siguiente linea:
+OPTIONS=OPTIONS="-F -s udp:127.0.0.1:7722 -l 10.200.3.16/192.168.0.120 -m 20000 -M 20200 -d DBUG:LOG_LOCAL0 -u kamailio"
+rtpproxy=/usr/bin/rtpproxy
+[ $RETVAL = 0 ] && touch /var/log/rtpproxy.lock
+[ $RETVAL = 0 ] && rm -f /var/log/rtpproxy.lock /var/run/rtpproxy.pid
+pkill rtpproxy -HUP
+pkill rtpproxy
+
+sh /etc/init.d/rtpproxy start
+
+/etc/init.d/kamailio start
+
+
+
+Siguiendo el blog de http://www.fredposner.com/1457/kamailio-behind-nat/
+
+1. Levantamos el contenedor: docker run -it --name=kamailio02 -p 5070:5070/udp -p 5070:5070 -p 20000-21000:20000-21000/udp kamailio/kamailio /usr/bin/bash
+
+2. /usr/sbin/mysqld --defaults-file=/etc/my.cnf --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib64/mysql/plugin --user=mysql --log-error=/var/log/mysqld.log &
+
+3. levantar rtpproxy
+docker run -it --name=rtpproxy01 --net=host kamailio/kamailio /usr/bin/bash
+Dentro ejecutamos el comando: rtpproxy -A 10.200.3.15 -F -l 172.17.0.1 -m 20000 -M 21000 -s udp:*:7722 -d INFO
+
+4. Levantar Kamailio.
+docker run -it --name=kamailio03 -p 5070:5070 -p 5070/5070/udp kamailio/kamailio /bin/bash
+Editamos el archivo de configuracion /usr/local/etc/kamailio/kamailio.cfg indicando en la linea listen lo siguiente:
+listen=udp:172.17.0.2:5070 advertise 10.200.3.15:5070 -> 172.17.0.2 es la ip del contenedor kamailio03
+
+modparam("rtpproxy", "rtpproxy_sock", "udp:172.17.0.1:7722") -> 172.17.0.1 es la ip del contenedor rtpproxy
+
+Dentro ejecutamos kamctl start.
+
+
+Instalacion con Alpine
+=======================
+192.168.0.100   db01
+192.168.0.1     rtpproxy03
+192.168.0.113   kamailio03 
+
+1. RTPPROXY
+   1.1 Crear el contenedor.
+	docker run -it --name=rtpproxy03 --net=host alpine:latest /bin/sh
+
+   1.2 Instalar paquete rtpproxy
+	apk add --update rtpproxy && rm /var/cache/apk/*
+
+   1.3 Lanzar el proceso rtpproxy
+	 rtpproxy -A 10.200.3.15 -F -l 192.168.0.1 -m 20000 -M 21000 -s udp:*:7722 -d INFO
+
+2. BASE DE DATOS.
+   2.1 Levantamos el contenedor y editamos el /etc/hosts.
+
+   2.2 Creamos el usuario de kamailio para poder crear la base de datos.
+	GRANT ALL ON *.* to kamailio_super@kamailio03 IDENTIFIED BY 'password' WITH GRANT OPTION;
+
+
+3. KAMAILIO.
+Este contenedor estará en la red LAN y tendra la dir IP. 192.168.0.113.
+
+   3.1 Crear el contenedor.
+         docker run -it --name=kamailio03 --ip=192.168.0.113 --net=lan alpine:latest /bin/sh
+
+   3.2 Instalar paquetes:
+	apk add --update kamailio kamailio-mysql kamailio-unixodbc kamailio-utils kamailio-presence kamailio-outbound kamailio-websocket && rm -rf /var/cache/apk/*
+ 
+   3.3 Editamos el archivo /etc/kamctlrc
+       DBENGINE=MYSQL
+       DBHOST=db01 
+       DBNAME=kamailio_db03
+       DBRWUSER="kamailio_rw"
+       DBRWPW="kamailiorw"
+       DBROUSER="kamailio_ro"
+       DBROPW="kamailioro"	
+       DBACCESSHOST=192.168.0.113
+       DBROOTUSER="kamailio_super"
+
+   3.4 Ejecutamos el comando: kamdbctl create; y respondemos "yes" a todas las preguntas.
+
+   3.5 Creamos un nuevo archivo de configuración basado en /etc/kamailio/kamailio-basic.cfg. Añadimos las siguientes líneas:
+#!define WITH_MYSQL                                                               
+#!define WITH_AUTH                                                                
+#!define WITH_USRLOCDB                                                            
+#!define WITH_ANTIFLOOD                                                           
+#!define WITH_NAT 
+
+#!define DBURL "mysql://kamailio_rw:kamailiorw@db01/kamailio_db03"
+
+listen=udp:192.168.0.113:5060 advertise 10.200.3.15:5060
+
+modparam("rtpproxy", "rtpproxy_sock", "udp:192.168.0.1:7722")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
