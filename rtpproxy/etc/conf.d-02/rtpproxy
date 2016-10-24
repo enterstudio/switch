@@ -1,8 +1,0 @@
-# Copyright 1999-2010 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Header: $
-
-# Additional options to start rtpproxy with
-#
-# see "rtpproxy -h" for a list of options
-RTPPROXY_OPTS="-A rtpproxy02/rtpproxy02-int -F -f -l public/rtpproxy02-int -m 10100 -M 10199 -s udp:*:7722 -d DBUG:LOG_LOCAL0"

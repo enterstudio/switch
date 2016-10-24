@@ -1,0 +1,64 @@
+Primero comprueba que existen dos interfaces eth. Si no hay dos, hacer comprobaciones durante un tiempo (timeout)
+
+Para extraer ip de interfaz eth0 (antes instalar ifconfig-> apt-get -y install net-tools):
+
+número de redes eth: ifconfig | grep -ce "^eth[0-9]\+"
+
+ip red eth0: ifconfig eth0 | awk '/inet addr/{split($2,a,":"); print a[2]}'
+
+mascara red eth0: ifconfig eth0 | awk '/Mask:/{split($4,a,":"); print a[2]}'
+
+direccion de red eth0: sipcalc $(ifconfig eth0 | awk '/inet addr/{split($2,a,":"); print a[2]}') $(ifconfig eth0 | awk '/Mask:/{split($4,a,":"); print a[2]}')|awk '/Network address/{split($4,a,"-"); print a[1]}'
+
+direccion de red de las variables de entorno: sipcalc $IP_OVERLAY $MASK_OVERLAY | awk '/Network address/{split($4,a,"-"); print a[1]}'
+
+# esto no--> direccion de red de las variables de entorno: sipcalc $IP_OVERLAY $MASK_OVERLAY | awk '/Network address/{split($4,a,"-"); print a[1]}'
+direccion de red de las variables de entorno: sipcalc $SUBNET_OVERLAY | awk '/Network address/{split($4,a,"-"); print a[1]}'
+
+comparar las direcciones de red obtenidas(la dirección de la subred overlay dada en el compose y la extraida en el container)
+si coinciden es la red overlay
+sino es la red gw_bridge
+
+cambiamos /etc/hosts (no se puede hacer directamente con sed sobre /etc/hosts, da como error Device or resource busy)
+
+cp /etc/hosts /etc/hosts.new
+
+sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME'-ext/g' /etc/hosts.new
+
+echo $(cat hosts.new) > hosts
+
+
+
+
+
+
+sipcalc $(ifconfig eth0 | awk '/inet addr/{split($2,a,":"); print a[2]}') $(ifconfig eth0 | awk '/Mask:/{split($4,a,":"); print a[2]}')
+
+un ejemplo extraido:
+red=eth0
+ip_lan=$(ifconfig $red | awk '/inet/ { print $2 } ' | sed -e s/addr://)
+mask=$(ifconfig $red | awk '/inet/ { print $4 } ' | sed -e s/Mask://)
+bcast=$(ifconfig $red | awk '/inet/ { print $3 } ' | sed -e s/Bcast://)
+net= $ip_modem / $mask ( el error ? )
+
+
+probar ipcal y sipcal, herramientas para calcular subredes y tal por linea de comandos.--> ipcalc el muy grande para la mierda que hace (casi 40 MB)
+sipcalc es pequeño y me da lo que necesito. Instalo ese.
+
+
+
+sed -i 's/fluentd-address:\s*.*/fluentd-address: \"'$IP_FLUENTD:$PORT_FLUENTD'\"/g' $COMPOSE
+
+sed -i 's/10.0.0.2\s*.*/10.0.0.2 72d07f055259-ext/g' /etc/hosts
+
+sed -r "s/10.0.0.2\s*(.*)/10.0.0.2/ebb3de6684f2-ext\1/" /etc/hosts
+
+sed -i 's/10.0.0.2 ebb3de6684f2/10.0.0.2 ebb3de6684f2-ext/' /etc/hosts 
+
+
+
+cp /etc/hosts /etc/hosts.new
+
+sed -i 's/10.0.0.2\s*ebb3de6684f2/10.0.0.2  ebb3de6684f2-ext/' /etc/hosts.new
+
+echo $(cat hosts.new) > hosts

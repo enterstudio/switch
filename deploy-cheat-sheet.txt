@@ -1,0 +1,38 @@
+Note: Now, we use docker without credential, when the use case is ready for production we add this security element.
+
+1) Create docker-hosts
+    - Minimal installation: 3 VMs
+    
+    *Note: This lecture describe a manual deployment; however, you can use docker-machine in order to facilitate steps 1), 2), 4), 5), 6)
+
+    - Links:
+    https://docs.docker.com/machine/install-machine/
+    https://docs.docker.com/engine/userguide/networking/get-started-overlay/
+
+2) Install docker in all VMs:
+    - https://docs.docker.com/engine/installation/
+
+3) Deploy consul container in one of the deployed VMs:
+    $# docker run -d --name=consul --restart=always -p "<CONSUL_PORT>:8500" -h "consul" -v /home/<USER>/consul_data:/data progrium/consul -server -bootstrap
+
+4) Reconfigure docker daemon in the other two VMs:
+    $# docker daemon -D -g /var/lib/docker -H unix:// -H tcp://0.0.0.0:2375 --cluster-store=consul://<CONSUL_IP>:<CONSUL_PORT> --cluster-advertise=<NETWORK_INTERFACE>:2375 -s aufs
+
+    *Note: currently, Ubuntu O.S. is been used, but if you use Red Hat O.S. or another Red Hat O.S.' family, you must change 'aufs' option by 'devicemapper' parameter.
+
+5) Deploy swarm in both machines:
+    $# docker run -itd --name=swarm-agent --expose=2375 --restart=always -e SWARM_HOST=:2375 swarm join --advertise <VM_IP>:2375 consul://<CONSUL_IP>:<CONSUL_PORT>
+
+6) Deploy swarm master in a VM:
+    $# docker run -itd --name=swarm-agent-master --expose=2375 --expose=3375 -p 3375:3375 --restart=always -e SWARM_HOST=:2375 swarm manage -H tcp://0.0.0.0:3375 --strategy spread --advertise <VM_IP>:3375 consul://<CONSUL_IP>:<CONSUL_PORT>
+
+7) Create bridge network in each cluster VM (not in the VM with consul):
+    $# docker network create --driver bridge --subnet=172.69.0.0/24 --ip-range=172.69.0.0/24  --gateway=172.69.0.1 uc-ext
+
+8) Create overlay network ('internal' type) in a VM of the cluster, this network will automatically be extended all over the cluster.
+    $# docker network create --driver overlay --internal=true --subnet=192.168.0.0/24 --ip-range=192.168.0.0/24  --gateway=192.168.0.1 uc-net
+
+9) Add the configuration services directories as shared volumes: we do this because we are still defining services behaviour and will need this functionality in the near future.
+
+10) Deploy remotely containers by means of docker-compose
+    $# docker-compose -H <SWARM_MASTER_IP>:3375 -f docker-compose.yml up

@@ -7,7 +7,7 @@ COPY msilo-create.sql /usr/share/kamailio/mysql/msilo-create.sql
 
 EXPOSE 5060
 
-ENV PUBLICIP=10.200.3.53
+#ENV PUBLICIP=10.200.3.53
 
 COPY ./etc/kamailio/ /etc/kamailio/
 

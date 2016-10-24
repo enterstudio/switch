@@ -1,4 +1,0 @@
-En esta prueba intentaremos solucionar alguno de los problemas con los que nos encontramos en la prueba 7.
-El problema que tuvimos en la prueba 7 consistia en no poder controlar la ip de rtpproxy y kamailio en la red docker_bridge, necesario para que dichos containers puedan comunicarse con el exterior del cluster.
-Para solucionar esto se ha considerado crear una red overlay con la opción --internal=true, la cual indica que no se cree la red docker_bridge.
-Posteriormente nosotros crearemos nuestra propia red bridge, sobre la cual si tendremos control e indicaremos a los containers un nombre o en su defecto una ip fija.
