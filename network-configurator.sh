@@ -5,135 +5,115 @@
 # de esta forma el script sería genérico
 # lo suyo sería prepararlo para ubuntu, debian, centos y alpine, que son las distribuciones más usadas para containers
 # 
-# De momento, paquetes a instalar: sipcalculator, bc o expr y net-tools(para tener ifconfig)
-
-# TIMEOUT milliseconds 
-TIMEOUT=$TIMEOUT
-
-HOSTNAME=$HOSTNAME
-
-IP_OVERLAY
-MASK_OVERLAY
-SUBNET_OVERLAY=$SUBNET_OVERLAY
-SUFFIX_OVERLAY=$SUFFIX_OVERLAY
-# HOSTNAME_OVERLAY=${HOSTNAME}-${SUFFIX_OVERLAY}
-
-# Si sufijo está vacio: HOSTNAME_OVERLAY=${HOSTNAME}
-# si sufijo no está vacio: HOSTNAME_OVERLAY=${HOSTNAME}"-"${SUFFIX_OVERLAY}
-if [#$SUFFIX_OVERLAY -ne 0]
+# De momento, paquetes a instalar: sipcalc y net-tools(para tener ifconfig)
+if [ -f /etc/debian_version]
     then
-    HOSTNAME_OVERLAY=${HOSTNAME}"-"$SUFFIX_OVERLAY
+    apt-get -y install sipcalc net-tools
 else
+    echo "This script is not valid for this Linux distribution."
+fi
+
+IP_REGEXP='^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$'
+if ! [[ $SUBNET_OVERLAY =~ $IP_REGEXP ]]
+    then
+    echo "subnet overlay is wrong"
+    exit -1
+fi
+
+TIMEOUT_REGEXP='^[0-9]+$'
+if ! [[ $TIMEOUT =~ $TIMEOUT_REGEXP ]]
+    then
+    echo "timeout is wrong"
+    exit -1
+fi
+
+LENGTH_SUFFIX_OVERLAY=${#SUFFIX_OVERLAY}
+if [ $LENGTH_SUFFIX_OVERLAY -eq 0 ]
+    then
     HOSTNAME_OVERLAY=$HOSTNAME
-if
-
-IP_GWBRIDGE
-MASK_GWBRIDGE
-SUBNET_GWBRIDGE
-SUFFIX_GWBRIDGE=$SUFFIX_GWBRIDGE
-
-if [#$SUFFIX_GWBRIDGE -ne 0]
-    then
-    HOSTNAME_GWBRIDGE=${HOSTNAME}"-"$SUFFIX_GWBRIDGE
 else
+    HOSTNAME_OVERLAY=${HOSTNAME}"-"$SUFFIX_OVERLAY
+fi
+
+LENGTH_SUFFIX_GWBRIDGE=${#SUFFIX_GWBRIDGE}
+if [ $LENGTH_SUFFIX_GWBRIDGE -eq 0 ]
+    then
     HOSTNAME_GWBRIDGE=$HOSTNAME
-if
-
-# HOSTNAME_GWBRIDGE=$HOSTNAME-$SUFFIX_GWBRIDGE
- 
-# SUBNET_GWBRIDGE="-"$SUFFIX_GWBRIDGE
-# HOSTNAME_GWBRIDGE=$HOSTNAME$SUFFIX_GWBRIDGE
-
-# HOSTNAME_GWBRIDGE=$HOSTNAME
-# HOSTNAME_GWBRIDGE+="-"
-# HOSTNAME_GWBRIDGE+=$SUFFIX_GWBRIDGE
- 
-#HOSTNAME_GWBRIDGE=${HOSTNAME}"-"${SUFFIX_GWBRIDGE}
+else
+    HOSTNAME_GWBRIDGE=${HOSTNAME}"-"$SUFFIX_GWBRIDGE
+fi
 
 HOSTS_FILE=/etc/hosts
-HOSTS_FILE_AUX=$HOST_FILE.aux
+HOSTS_FILE_AUX=${HOSTS_FILE}".aux"
 
 NUM_ETH=2
 COUNT_ETH=$(ifconfig | grep -ce "^eth[0-9]\+")
 
-# Debería comprobar que SUBNET_OVERLAY y TIMEOUT existe
-
-#SECONDS=$(echo "scale=3; $TIMEOUT/1000" | bc)
 TIME_INIT=$(date +%s%N)
-# resta=`expr $x - $y`
-TIME='expr $(date +%s%N) - $TIME_INIT'
-#TIME_END=$(echo "$TIMEOUT*1000000" | bc)
-TIME_END=$(expr '${TIMEOUT}\*1000000')
+TIME=$(($(date +%s%N) - $TIME_INIT))
+TIME_END=$(($TIMEOUT * 1000000))
 
-
-while [[COUNT_ETH -ne NUM_ETH] && [TIME -lt TIME_END]]
+while [ $COUNT_ETH -ne $NUM_ETH ] && [ $TIME -lt $TIME_END ]
 do
-    TIME='expr $(date +%s%N) - $TIME_INIT'
-    COUNT_ETH=$(ifconfig | grep -ce "^eth[0-9]\+")
+    $TIME=$(($(date +%s%N) - $TIME_INIT))
+    $COUNT_ETH=$(ifconfig | grep -ce "^eth[0-9]\+")
 done
 
-if [COUNT_ETH -eq NUM_ETH]
+if [ $COUNT_ETH -eq $NUM_ETH ]
     then
     IP_ETH0=$(ifconfig eth0 | awk '/inet addr/{split($2,a,":"); print a[2]}')
     IP_ETH1=$(ifconfig eth1 | awk '/inet addr/{split($2,a,":"); print a[2]}')
     MASK_ETH0=$(ifconfig eth0 | awk '/Mask:/{split($4,a,":"); print a[2]}')
     MASK_ETH1=$(ifconfig eth1 | awk '/Mask:/{split($4,a,":"); print a[2]}')
-    SUBNET_ETH0=$(sipcalc $IP_ETH0 $MASK_ETH0|awk '/Network address/{split($4,a,"-"); print a[1]}')
-    SUBNET_ETH1=$(sipcalc $IP_ETH1 $MASK_ETH1|awk '/Network address/{split($4,a,"-"); print a[1]}')
+    SUBNET_ETH0=$(sipcalc $IP_ETH0 $MASK_ETH0 | awk '/Network address/{split($4,a,"-"); print a[1]}')
+    SUBNET_ETH1=$(sipcalc $IP_ETH1 $MASK_ETH1 | awk '/Network address/{split($4,a,"-"); print a[1]}')
 
-        if [SUBNET_OVERLAY == SUBNET_ETH0]
+        if [ $SUBNET_OVERLAY == $SUBNET_ETH0 ]
             then
+            ETH_OVERLAY="eth0"
             IP_OVERLAY=$IP_ETH0
             MASK_OVERLAY=$MASK_ETH0
+            ETH_GWBRIDGE="eth1"
             IP_GWBRIDGE=$IP_ETH1
             MASK_GWBRIDGE=$MASK_ETH1
-        else
+            SUBNET_GWBRIDGE=$SUBNET_ETH1
+        elif [ $SUBNET_OVERLAY == $SUBNET_ETH1 ]
+            then
+            ETH_OVERLAY="eth1"
             IP_OVERLAY=$IP_ETH1
             MASK_OVERLAY=$MASK_ETH1
+            ETH_GWBRIDGE="eth0"
             IP_GWBRIDGE=$IP_ETH0
             MASK_GWBRIDGE=$MASK_ETH0
-        fi
-    export IP_OVERLAY
-    export MASK_OVERLAY
-    export IP_GWBRIDGE
-    export MASK_GWBRIDGE
-    cp /etc/hosts /etc/hosts.new
-    sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME_GWBRIDGE'/g' /etc/hosts.new
-    sed -i 's/'$IP_OVERLAY'\s*'$HOSTNAME'/'$IP_OVERLAY'        '$HOSTNAME_OVERLAY'/g' /etc/hosts.new
-    echo $(cat hosts.new) > /etc/hosts
+            SUBNET_GWBRIDGE=$SUBNET_ETH0
+        else
+            echo "subnet overlay match anything"
+            exit -1
 
+        fi
+
+    export ETH_OVERLAY=$ETH_OVERLAY
+    export IP_OVERLAY=$IP_OVERLAY
+    export MASK_OVERLAY=$MASK_OVERLAY
+    export HOSTNAME_OVERLAY=$HOSTNAME_OVERLAY
+
+    export ETH_GWBRIDGE=$ETH_GWBRIDGE
+    export IP_GWBRIDGE=$IP_GWBRIDGE
+    export MASK_GWBRIDGE=$MASK_GWBRIDGE
+    export SUBNET_GWBRIDGE=$SUBNET_GWBRIDGE
+    export HOSTNAME_GWBRIDGE=$HOSTNAME_GWBRIDGE
+
+    cp $HOSTS_FILE $HOSTS_FILE_AUX
+    sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME_GWBRIDGE'/g' $HOSTS_FILE_AUX
+    sed -i 's/'$IP_OVERLAY'\s*'$HOSTNAME'/'$IP_OVERLAY'        '$HOSTNAME_OVERLAY'/g' $HOSTS_FILE_AUX
+    echo $(cat $HOSTS_FILE_AUX) > $HOSTS_FILE
+    
     # Último paso: arrancar el servicio
     # sería buena idea usar el script en el entrypoint del dockerfile
     # y pasar el comando de arranque del servicio como argumento con el cmd
     # de esta forma quedaría más genérico el script
+    $@
+    exit 0
 fi
-
-
-# si no subnet_overlay o suffix_overlay o timeout entonces error
-# comprueba numero de redes eth, si no son dos sigue comprobando hasta que se agote timeout. si se agota y no = 2 => fin
-#   Para comprobar el número de redes eth: ifconfig | grep -ce "^eth[0-9]\+"
-#   Para comprobar time usa: date +%s%N TIME=$(date +%s%N)-$TIME_INIT
-#
-# IP_ETH0=$(ifconfig eth0 | awk '/inet addr/{split($2,a,":"); print a[2]}')
-# IP_ETH1=$(ifconfig eth1 | awk '/inet addr/{split($2,a,":"); print a[2]}')
-# MASK_ETH0=$(ifconfig eth0 | awk '/Mask:/{split($4,a,":"); print a[2]}')
-# MASK_ETH1=$(ifconfig eth1 | awk '/Mask:/{split($4,a,":"); print a[2]}')
-# SUBNET_ETH0=$(sipcalc $IP_ETH0 $MASK_ETH0|awk '/Network address/{split($4,a,"-"); print a[1]}')
-# SUBNET_ETH1=$(sipcalc $IP_ETH1 $MASK_ETH1|awk '/Network address/{split($4,a,"-"); print a[1]}')
-# 
-# Si SUBNET_ETH0 == SUBNET_OVERLAY entonces es la overlay
-#   IP_OVERLAY=$IP_ETH0
-#   MASK_OVERLAY=$MASK_ETH0
-#   IP_GWBRIDGE=$IP_ETH1
-#   MASK_GWBRIDGE=$MASK_ETH1
-# sino, es la gwbridge
-#   IP_OVERLAY=$IP_ETH1
-#   MASK_OVERLAY=$MASK_ETH1
-#   IP_GWBRIDGE=$IP_ETH0
-#   MASK_GWBRIDGE=$MASK_ETH0
-#   
-# Cambiamos /etc/hosts. (Ojo, el comando sed no funciona -> error: Device or resource busy)
-#   cp /etc/hosts /etc/hosts.new
-#   sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME'-'$SUFFIX_GWBRIDGE/g' /etc/hosts.new
-#   sed -i 's/'$IP_OVERLAY'\s*'$HOSTNAME'/'$IP_OVERLAY'        '$HOSTNAME'-'$SUFFIX_OVERLAY/g' /etc/hosts.new
-#   echo $(cat hosts.new) > /etc/hosts
+echo "you can not connect the $NUM_ETH interfaces."
+exit -1
