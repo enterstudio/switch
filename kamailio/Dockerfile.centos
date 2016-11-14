@@ -1,0 +1,16 @@
+FROM centos:7
+
+RUN yum install -y http://dev.mysql.com/get/mysql-community-release-el7-5.noarch.rpm 
+COPY kamailio.repo /etc/yum.repos.d/kamailio.repo
+
+RUN yum install -y mysql-community-client kamailio.x86_64 kamailio-mysql.x86_64 kamailio-outbound.x86_64 kamailio-presence.x86_64 kamailio-sqlite.x86_64 kamailio-tls.x86_64 kamailio-unixodbc.x86_64 kamailio-websocket.x86_64 kamailio-xmpp.x86_64 && yum -y clean all && rm -rf /tmp/*
+
+COPY msilo-create.sql /usr/share/kamailio/mysql/msilo-create.sql
+COPY ./etc/kamailio/kamctlrc /etc/kamailio/kamctlrc
+COPY ./etc/kamailio/kamailio-centos.cfg /etc/kamailio/kamailio.cfg
+
+EXPOSE 5060
+
+#ENV PUBLICIP=10.128.19.60
+
+CMD sed -i 's/#!define PUBLICIP \s*.*/#!define PUBLICIP  \"'$PUBLICIP'\"/g' /etc/kamailio/kamailio.cfg && /usr/sbin/kamailio -P /var/run/kamailio.pid -m 64 -M 8 -u kamailio -g kamailio -DD -E -e

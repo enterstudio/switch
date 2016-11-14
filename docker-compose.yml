@@ -1,12 +1,11 @@
 version: "2"
 services:
   kamailio:
-    build: ./kamailio
-    #image: wtelecom/kamailio:uc-1
+    #build: ./kamailio
+    image: wtelecom/kamailio:uc-1
     depends_on:
       - db
-      - rtpproxy01
-      - rtpproxy02
+      - rtpproxy
       - asterisk
       - mcu
       - mediamixer
@@ -74,8 +73,8 @@ services:
           - db
 
   asterisk:
-    build: ./asterisk
-    #image: wtelecom/asterisk:uc-1
+    #build: ./asterisk
+    image: wtelecom/asterisk:uc-1
     environment:
       - constraint:node==master
     volumes:
@@ -85,8 +84,8 @@ services:
       - uc-net
 
   mcu:
-    build: ./mcu
-    #image: wtelecom/medooze-mcu:uc-1
+    #build: ./mcu
+    image: wtelecom/medooze-mcu:uc-1
     depends_on:
       - mediamixer
     environment:
@@ -103,8 +102,8 @@ services:
           - mcu-int
         
   mediamixer:
-    build: ./mediamixer
-    #image: wtelecom/medooze-mediamixer:uc-1
+    #build: ./mediamixer
+    image: wtelecom/medooze-mediamixer:uc-1
     environment:
       - constraint:node==slave
     # volumes:

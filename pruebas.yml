@@ -1,0 +1,96 @@
+version: "2"
+services:
+  kamailio:
+    build: ./kamailio
+    #image: wtelecom/kamailio:uc-1
+    depends_on:
+      - db
+      - rtpproxy
+    environment:
+      - constraint:node==D-RSC-SWT-DOC01
+      - PUBLICIP=10.128.19.60
+    volumes:
+      - ./kamailio/etc/kamailio:/etc/kamailio
+    ports:
+      - "5060:5060/udp"
+      - "5061:5061/udp"
+    hostname: kamailio-h
+    extra_hosts:
+      - "public_ip:10.128.19.60"
+    container_name: kamailio-c
+#    command: top
+    networks:
+      uc-ol:
+        aliases:
+          - kamailio-int
+
+  rtpproxy:
+    build: ./rtpproxy
+    #image: wtelecom/rtpproxy:uc-1
+    depends_on:
+      - db
+    environment:
+      ### El tema de la ip pública es un problema
+      ### Te limita a que este contenedor solo puede funcionar en esta máquina
+      ### Debería conseguir en el script que el contenedor detecte la ip del host
+      ### De momento lo forzaré a estar en esta máquina
+      - constraint:node==D-RSC-SWT-DOC01
+      - PUBLIC_IP=10.128.19.60
+      ########################################################################
+      - PORT_MAX=10099
+      - PORT_MIN=10000
+      - TIMEOUT=1000
+      - SUBNET_OVERLAY=192.168.1.0
+      - SUFFIX_OVERLAY=int
+      - SUFFIX_GWBRIDGE=ext
+      - PORT_RTPPROXY=7711
+      - DB_KAMAILIO=kamailio_db
+      - TABLE_RTPPROXY=rtpproxy
+      - DB_USER=kamailio_user
+      - DB_PWD=kamailiorw
+      - DB_HOST=db
+#      - RTPPROXY_OPTS=-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0
+#    entrypoint: sh network-configurator-alpine.sh db-client.sh
+#    command: top
+    ports:
+      # - "10000-10399:10000-10399/udp"
+      - "10000-10099/udp"
+    expose:
+      - "7711"
+#    hostname: rtpproxy-h
+#    container_name: rtpproxy
+    # extra_hosts:
+    #   - "public_ip:10.128.19.60"
+#    volumes:
+#      - rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
+    networks:
+      - uc-ol
+#      uc-ol:
+#        aliases:
+#          - rtpproxy-int
+
+  db:
+    build: ./mysql
+    #image: wtelecom/mysql:uc-1
+    environment:
+      - constraint:node==D-RSC-SWT-DOC01
+      - MYSQL_ROOT_PASSWORD=supersecret
+    volumes:
+      - ./mysql/dataDir:/var/lib/mysql
+#      - ./mysql/backup:/backup
+    hostname: db
+    container_name: db
+    networks:
+      uc-ol:
+        aliases:
+          - db
+
+networks:
+  uc-ol:
+    driver: overlay
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.1.0/24
+          ip_range: 192.168.1.0/24
+          gateway: 192.168.1.1
