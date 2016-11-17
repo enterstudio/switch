@@ -3,6 +3,7 @@ services:
   kamailio:
     build: ./kamailio
     #image: wtelecom/kamailio:uc-1
+    restart: always
     depends_on:
       - db
       - rtpproxy
@@ -27,6 +28,7 @@ services:
   rtpproxy:
     build: ./rtpproxy
     #image: wtelecom/rtpproxy:uc-1
+    restart: always
     depends_on:
       - db
     environment:
@@ -72,12 +74,14 @@ services:
   db:
     build: ./mysql
     #image: wtelecom/mysql:uc-1
+    restart: always
     environment:
       - constraint:node==D-RSC-SWT-DOC01
       - MYSQL_ROOT_PASSWORD=supersecret
     volumes:
       - ./mysql/dataDir:/var/lib/mysql
 #      - ./mysql/backup:/backup
+#      - ./mysql/lib_mysqludf_sys:/lib_mysqludf_sys
     hostname: db
     container_name: db
     networks:

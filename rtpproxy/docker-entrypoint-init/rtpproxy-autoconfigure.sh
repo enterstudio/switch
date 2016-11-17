@@ -115,6 +115,12 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
 
     mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < add-rtpproxy.sql
+    if test $? -ne 0; then
+	echo "ERROR: Could not be added to the database"
+	exit 1
+    else
+	sshpass -p docker ssh root@kamailio-c 'kamctl restart'
+    fi
 
     # START RTPPROXY
     /usr/bin/rtpproxy $RTPPROXY_OPTS

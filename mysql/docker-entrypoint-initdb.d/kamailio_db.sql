@@ -1313,7 +1313,7 @@ CREATE TABLE `rtpproxy` (
   `weight` int(11) NOT NULL DEFAULT '1',
   `description` varchar(64) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1322,7 +1322,6 @@ CREATE TABLE `rtpproxy` (
 
 LOCK TABLES `rtpproxy` WRITE;
 /*!40000 ALTER TABLE `rtpproxy` DISABLE KEYS */;
-INSERT INTO `rtpproxy` VALUES (1,'0','udp:switch_rtpproxy_1:7711',0,1,'');
 /*!40000 ALTER TABLE `rtpproxy` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2043,4 +2042,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-14 10:11:53
+-- Dump completed on 2016-11-16 15:59:07

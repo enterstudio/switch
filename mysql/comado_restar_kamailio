@@ -1,0 +1,17 @@
+
+sshpass -p docker ssh root@kamailio-c 'kamctl restart'
+
+DEBERÍA USAR OPCIÓN -e PARA TOMAR LA CONTRASEÑA DE UNA VARIABLE DE ENTORNO.
+DE ESA FORMA PUEDO PASARLA DESDE EL COMPOSE
+
+Usage: sshpass [-f|-d|-p|-e] [-hV] command parameters
+   -f filename   Take password to use from file
+   -d number     Use number as file descriptor for getting password
+   -p password   Provide password as argument (security unwise)
+   -e            Password is passed as env-var "SSHPASS"
+   With no parameters - password will be taken from stdin
+
+   -h            Show help (this screen)
+   -V            Print version information
+At most one of -f, -d, -p or -e should be used
+
