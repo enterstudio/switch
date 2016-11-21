@@ -114,6 +114,11 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' add-rtpproxy.sql
     sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
 
+    sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' del-rtpproxy.sql
+    sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' del-rtpproxy.sql
+    sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' del-rtpproxy.sql
+    sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' del-rtpproxy.sql
+
     mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < add-rtpproxy.sql
     if test $? -ne 0; then
 	echo "ERROR: Could not be added to the database"

@@ -51,4 +51,4 @@ WORKDIR /docker-entrypoint-init
 
 #CMD sh init-rtpproxy.sh
 #CMD /usr/bin/rtpproxy $RTPPROXY_OPTS
-CMD sh rtpproxy-autoconfigure.sh
+CMD ["sh", "sig-handler.sh", "sh", "rtpproxy-autoconfigure.sh"]
