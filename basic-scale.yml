@@ -1,8 +1,9 @@
 version: "2"
 services:
   kamailio:
-    #build: ./kamailio
-    image: wtelecom/kamailio:uc-1
+    build: ./kamailio
+    #image: wtelecom/kamailio:uc-1
+    restart: always
     depends_on:
       - db
       - rtpproxy
@@ -10,7 +11,7 @@ services:
       - constraint:node==D-RSC-SWT-DOC01
       - PUBLICIP=10.128.19.60
     volumes:
-      - /home/tech/uc/kamailio:/etc/kamailio
+      - ./kamailio/etc/kamailio:/etc/kamailio
     ports:
       - "5060:5060/udp"
       - "5061:5061/udp"
@@ -24,8 +25,9 @@ services:
           - kamailio-int
 
   rtpproxy:
-    #build: ./rtpproxy
-    image: wtelecom/rtpproxy:uc-1
+    build: ./rtpproxy
+    #image: wtelecom/rtpproxy:uc-1
+    restart: always
     depends_on:
       - db
     environment:
@@ -36,7 +38,7 @@ services:
       - constraint:node==D-RSC-SWT-DOC01
       - PUBLIC_IP=10.128.19.60
       ########################################################################
-      - PORT_MAX=10399
+      - PORT_MAX=10099
       - PORT_MIN=10000
       - TIMEOUT=1000
       - SUBNET_OVERLAY=192.168.1.0
@@ -44,39 +46,33 @@ services:
       - SUFFIX_GWBRIDGE=ext
       - PORT_RTPPROXY=7711
       - DB_KAMAILIO=kamailio_db
+      - TABLE_RTPPROXY=rtpproxy
       - DB_USER=kamailio_user
-      - DB_PWD=kamailiopwd
+      - DB_PWD=kamailiorw
       - DB_HOST=db
-    command: top
+#      - RTPPROXY_OPTS=-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0
     ports:
-      # - "10000-10399:10000-10399/udp"
-      - "10000-10399/udp"
+      - "10000-10099/udp"
     expose:
       - "7711"
-    hostname: rtpproxy-h
-    container_name: rtpproxy
-    # extra_hosts:
-    #   - "public_ip:10.128.19.60"
     networks:
-      uc-ol:
-        aliases:
-          - rtpproxy-int
+      - uc-ol
 
   db:
-    #build: ./mysql
-    image: wtelecom/mysql:uc-1
+    build: ./mysql
+    #image: wtelecom/mysql:uc-1
+    restart: always
     environment:
       - constraint:node==D-RSC-SWT-DOC01
       - MYSQL_ROOT_PASSWORD=supersecret
     volumes:
-      - /home/tech/uc/mysql/dataDir:/var/lib/mysql
+      - ./mysql/dataDir:/var/lib/mysql
     hostname: db
     container_name: db
     networks:
       uc-ol:
         aliases:
           - db
-
 networks:
   uc-ol:
     driver: overlay

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x
+#set -x
 
 pid=0
 
@@ -29,8 +29,8 @@ kill_handler() {
 
 # setup handlers
 # on callback, kill the last background process, which is `tail -f /dev/null` and execute the specified handler
-trap 'echo "pid bucle ${!}"; kill ${!}; term_handler' SIGTERM
-trap 'echo "pid bucle ${!}"; kill ${!}; kill_handler' SIGKILL
+trap 'kill ${!}; term_handler' SIGTERM
+trap 'kill ${!}; kill_handler' SIGKILL
 
 # run application
 $@ &

@@ -1,9 +1,0 @@
-make <<!
-ES
-Andalucia
-Sevilla
-.
-.
-.
-!
-

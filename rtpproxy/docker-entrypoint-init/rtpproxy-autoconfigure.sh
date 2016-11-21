@@ -1,19 +1,6 @@
 #!/bin/bash
 
-#echo "rtpproxy autoconfigure"
-#
-#if [ -f /etc/debian_version ]
-#    then
-#    apt-get -y install sipcalc net-tools
-#elif [ -f /etc/alpine-release ]
-#    then
-#    apk add --update sipcalc bind bind-tools && rm -rf /var/cache/apk/*
-#else
-#    echo "This script is not valid for this Linux distribution."
-#fi
-
 (echo "$SUBNET_OVERLAY" | grep -Eq "$IP_REGEXP") && echo "subnet overlay is $SUBNET_OVERLAY" || (echo "subnet overlay is wrong" && exit 1)
-#(echo "$TIMEOUT" | grep -Eq "$TIMEOUT_REGEXP") && echo "timeout is $TIMEOUT millisecond" || (echo "timeout is wrong" && exit 1)
 
 LENGTH_SUFFIX_OVERLAY=${#SUFFIX_OVERLAY}
 if [ $LENGTH_SUFFIX_OVERLAY -eq 0 ]
@@ -37,16 +24,6 @@ HOSTS_FILE_BACKUP=${HOSTS_FILE}".bck"
 
 NUM_ETH=2
 COUNT_ETH=$(ifconfig | grep -cE "^eth[0-9]+")
-
-# TIME_INIT=$(date +%s%N)
-# TIME=$(($(date +%s%N) - $TIME_INIT))
-# TIME_END=$(($TIMEOUT * 1000000))
-
-# while [ $COUNT_ETH -ne $NUM_ETH ] && [ $TIME -lt $TIME_END ]
-# do
-#     $TIME=$(($(date +%s%N) - $TIME_INIT))
-#     $COUNT_ETH=$(ifconfig | grep -cE "^eth[0-9]+")
-# done
 
 if [ $COUNT_ETH -eq $NUM_ETH ]
     then
@@ -82,21 +59,9 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
 
         fi
 
-#    export ETH_OVERLAY=$ETH_OVERLAY
-#    export IP_OVERLAY=$IP_OVERLAY
-#    export MASK_OVERLAY=$MASK_OVERLAY
-#    export HOSTNAME_OVERLAY=$HOSTNAME_OVERLAY
 
-#    export ETH_GWBRIDGE=$ETH_GWBRIDGE
-#    export IP_GWBRIDGE=$IP_GWBRIDGE
-#    export MASK_GWBRIDGE=$MASK_GWBRIDGE
-#    export SUBNET_GWBRIDGE=$SUBNET_GWBRIDGE
-#    export HOSTNAME_GWBRIDGE=$HOSTNAME_GWBRIDGE
-    
     HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
     RTPPROXY_OPTS=$(echo "-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0") 
-#    export HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
-#    export RTPPROXY_OPTS=$(echo "-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")
 
     # UPDATE /etc/hosts
     if ! [ -f $HOSTS_FILE_BACKUP ]

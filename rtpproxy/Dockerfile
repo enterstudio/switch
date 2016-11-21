@@ -33,22 +33,9 @@ MAINTAINER Jorge Cerpa
 
 RUN apk add --update rtpproxy mysql-client sipcalc bind bind-tools openssh-client sshpass && rm -rf /var/cache/apk/*
 RUN echo 'StrictHostKeyChecking no' >> /etc/ssh/ssh_config
-#RUN mkdir /docker-entrypoint-init 
-#WORKDIR /docker-entrypoint-init
-#RUN ln -s /etc/init.d/rtpproxy rtpproxy
-#COPY ./etc/conf.d/rtpproxy /etc/conf.d/rtpproxy
 
 COPY ./docker-entrypoint-init /docker-entrypoint-init
 
-#WORKDIR /etc/init.d/
 WORKDIR /docker-entrypoint-init
 
-#ENTRYPOINT ["sh", "network-configurator-alpine.sh", "sh", "db-client.sh"]
-
-#WORKDIR /etc/init.d/
-# Otra opción sería modificar el script /etc/init.d/rtpproxy añadiendo el contenido del db-client.sh
-#CMD rtpproxy -A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0
-
-#CMD sh init-rtpproxy.sh
-#CMD /usr/bin/rtpproxy $RTPPROXY_OPTS
 CMD ["sh", "sig-handler.sh", "sh", "rtpproxy-autoconfigure.sh"]
