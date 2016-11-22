@@ -1,4 +1,4 @@
-FROM alpine
+FROM docker:1.12.3-dind
 MAINTAINER Jorge Cerpa
 
 #ENV PUBLIC_IP

@@ -22,6 +22,10 @@ HOSTS_FILE=/etc/hosts
 HOSTS_FILE_AUX=${HOSTS_FILE}".aux"
 HOSTS_FILE_BACKUP=${HOSTS_FILE}".bck"
 
+RESOLV_FILE=/etc/resolv.conf
+RESOLV_FILE_AUX=${RESOLV_FILE}".aux"
+RESOLV_FILE_BACKUP=${RESOLV_FILE}".bck"
+
 NUM_ETH=2
 COUNT_ETH=$(ifconfig | grep -cE "^eth[0-9]+")
 
@@ -59,9 +63,19 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
 
         fi
 
+    # UPDATE /etc/resolv.conf
+    if ! [ -f $RESOLV_FILE_BACKUP ]
+        then
+        cp $RESOLV_FILE $RESOLV_FILE_BACKUP
+    fi
+    cp $RESOLV_FILE_BACKUP $RESOLV_FILE_AUX
+    sed -i 's/options ndots:0/options ndots:1/g' $RESOLV_FILE_AUX
+    cat $RESOLV_FILE_AUX > $RESOLV_FILE
 
     HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
-    RTPPROXY_OPTS=$(echo "-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0") 
+    DOCKER_HOST_NAME=$(docker -H $SWARM_MASTER_IP:$SWARM_MASTER_PORT ps -a | awk '/'$HOSTNAME_EXTERNAL_OVERLAY'/ {split ($NF,a,"/"); print a[1]}')
+    PUBLIC_IP=$(host $DOCKER_HOST_NAME | awk '/address/{split ($4,a," "); print a[1]}')
+    RTPPROXY_OPTS=$(echo "-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")  
 
     # UPDATE /etc/hosts
     if ! [ -f $HOSTS_FILE_BACKUP ]
@@ -71,8 +85,8 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     cp $HOSTS_FILE_BACKUP $HOSTS_FILE_AUX
     sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME_GWBRIDGE'/g' $HOSTS_FILE_AUX
     sed -i 's/'$IP_OVERLAY'\s*'$HOSTNAME'/'$IP_OVERLAY'        '$HOSTNAME_OVERLAY'/g' $HOSTS_FILE_AUX
-    echo $(cat $HOSTS_FILE_AUX) > $HOSTS_FILE
-    
+    cat $HOSTS_FILE_AUX > $HOSTS_FILE
+       
     # UPDATE DATABASE
     sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' add-rtpproxy.sql
     sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' add-rtpproxy.sql

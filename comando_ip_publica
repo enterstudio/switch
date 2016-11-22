@@ -1,0 +1,1 @@
+docker -H 10.128.19.60:3375 ps | awk '/fossology/ { print $NF}' | awk '{split ($1,a,"/"); print a[1]}'
