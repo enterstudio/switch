@@ -75,7 +75,6 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
     DOCKER_HOST_NAME=$(docker -H $SWARM_MASTER_IP:$SWARM_MASTER_PORT ps -a | awk '/'$HOSTNAME_EXTERNAL_OVERLAY'/ {split ($NF,a,"/"); print a[1]}')
     PUBLIC_IP=$(host $DOCKER_HOST_NAME | awk '/address/{split ($4,a," "); print a[1]}')
-    RTPPROXY_OPTS=$(echo "-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")  
 
     # UPDATE /etc/hosts
     if ! [ -f $HOSTS_FILE_BACKUP ]
@@ -86,41 +85,22 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     sed -i 's/'$IP_GWBRIDGE'\s*'$HOSTNAME'/'$IP_GWBRIDGE'        '$HOSTNAME_GWBRIDGE'/g' $HOSTS_FILE_AUX
     sed -i 's/'$IP_OVERLAY'\s*'$HOSTNAME'/'$IP_OVERLAY'        '$HOSTNAME_OVERLAY'/g' $HOSTS_FILE_AUX
     cat $HOSTS_FILE_AUX > $HOSTS_FILE
-       
-    # UPDATE DATABASE
-    sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' add-rtpproxy.sql
-    sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' add-rtpproxy.sql
-    sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' add-rtpproxy.sql
-    sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
 
-    sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' del-rtpproxy.sql
-    sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' del-rtpproxy.sql
-    sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' del-rtpproxy.sql
-    sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' del-rtpproxy.sql
-
-    mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < add-rtpproxy.sql
-    if test $? -ne 0 
-      then
-	echo "ERROR: Could not be added to the database"
-	exit 1
+    /usr/sbin/sshd
+    if test $? -ne 0
+        then
+        echo "ERROR: could not run sshd"
+        exit 1
     else
-        sshpass -p $SSH_KAMAILIO_PASSWORD ssh $SSH_KAMAILIO_USER@$KAMAILIO_HOST 'kamctl restart'
-        if test $? -ne 255
-          then
-            echo "ERROR: could not connect with kamailio"
+        sed -i 's/#!define PUBLICIP \s*.*/#!define PUBLIC_IP  \"'$PUBLIC_IP'\"/g' /etc/kamailio/kamailio.cfg 
+        if test $? -ne 0
+            then
+            echo "ERROR: could not config kamailio"
             exit 1
         else
-          # START RTPPROXY
-          /usr/bin/rtpproxy $RTPPROXY_OPTS
-          mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < del-rtpproxy.sql
-          if test $? -ne 0
-            then
-              echo "ERROR: Could not be added to the database"
-              exit 1
-          fi
-       fi
-    fi
+            /usr/sbin/kamailio -P /var/run/kamailio/kamailio.pid -m 64 -M 8 -u kamailio -g kamailio -DD -E -e
+        fi
+    fi       
 fi
 echo "you can not connect the $NUM_ETH interfaces."
 exit 1
-

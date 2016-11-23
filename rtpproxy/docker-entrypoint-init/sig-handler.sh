@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-#set -x
+#!/bin/bash
 
 pid=0
 
@@ -8,7 +7,7 @@ term_handler() {
   if [ $pid -ne 0 ]; then
     echo "stopping container"
     mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < del-rtpproxy.sql
-    sshpass -p docker ssh root@kamailio-c 'kamctl restart'
+    sshpass -p $SSH_KAMAILIO_PASSWORD ssh $SSH_KAMAILIO_USER@$KAMAILIO_HOST 'kamctl restart'
     kill -SIGTERM "$pid"
     wait "$pid"
   fi
@@ -20,7 +19,7 @@ kill_handler() {
   if [ $pid -ne 0 ]; then
     echo "killing container"   
     mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < del-rtpproxy.sql
-    sshpass -p docker ssh root@kamailio-c 'kamctl restart'
+    sshpass -p $SSH_KAMAILIO_PASSWORD ssh $SSH_KAMAILIO_USER@$KAMAILIO_HOST 'kamctl restart'
     kill -SIGKILL "$pid"
     wait "$pid"
   fi
@@ -28,16 +27,11 @@ kill_handler() {
 }
 
 # setup handlers
-# on callback, kill the last background process, which is `tail -f /dev/null` and execute the specified handler
-trap 'kill ${!}; term_handler' SIGTERM
-trap 'kill ${!}; kill_handler' SIGKILL
+trap 'term_handler' SIGTERM
+trap 'kill_handler' SIGKILL
 
 # run application
 $@ &
 pid="$!"
 
-# wait forever
-while true
-do
-  tail -f /dev/null & wait ${!}
-done
+wait "$pid"

@@ -8,22 +8,28 @@ services:
       - db
       - rtpproxy
     environment:
-      - constraint:node==D-RSC-SWT-DOC01
-      - PUBLICIP=10.128.19.60
-    volumes:
-      - ./kamailio/etc/kamailio:/etc/kamailio
+#      - constraint:node==D-RSC-SWT-DOC01
+#      - PUBLICIP=10.128.19.60
+      - SWARM_MASTER_IP=10.128.19.60
+      - SWARM_MASTER_PORT=3375
+      - SUBNET_OVERLAY=192.168.1.0
+      - SUFFIX_OVERLAY=int
+      - SUFFIX_GWBRIDGE=ext
+#    volumes:
+#      - ./kamailio/config/kamailio:/etc/kamailio
     ports:
       - "5060:5060/udp"
       - "5061:5061/udp"
-    hostname: kamailio-h
+#    hostname: kamailio-h
     extra_hosts:
       - "public_ip:10.128.19.60"
-    container_name: kamailio-c
+    container_name: kamailio
 #    command: top
     networks:
-      uc-ol:
-        aliases:
-          - kamailio-int
+      - uc-ol
+#      uc-ol:
+#        aliases:
+#          - kamailio-int
 
   rtpproxy:
     build: ./rtpproxy
@@ -53,6 +59,9 @@ services:
       - DB_USER=kamailio_user
       - DB_PWD=kamailiorw
       - DB_HOST=db
+      - SSH_KAMAILIO_PASSWORD=docker
+      - SSH_KAMAILIO_USER=root
+      - KAMAILIO_HOST=kamailio
 #      - RTPPROXY_OPTS=-A $IP_GWBRIDGE/$IP_OVERLAY -F -f -l $PUBLIC_IP/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0
 #    entrypoint: sh network-configurator-alpine.sh db-client.sh
 #    command: top
@@ -89,12 +98,13 @@ services:
       - ./mysql/dataDir:/var/lib/mysql
 #      - ./mysql/backup:/backup
 #      - ./mysql/lib_mysqludf_sys:/lib_mysqludf_sys
-    hostname: db
+#    hostname: db
     container_name: db
     networks:
-      uc-ol:
-        aliases:
-          - db
+      - uc-ol
+#      uc-ol:
+#        aliases:
+#          - db
 
 networks:
   uc-ol:
