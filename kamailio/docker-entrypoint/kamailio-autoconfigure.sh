@@ -92,7 +92,8 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
         echo "ERROR: could not run sshd"
         exit 1
     else
-        sed -i 's/#!define PUBLICIP \s*.*/#!define PUBLIC_IP  \"'$PUBLIC_IP'\"/g' /etc/kamailio/kamailio.cfg 
+        sed -i 's/#!define PUBLIC_IP \s*.*/#!define PUBLIC_IP  \"'$PUBLIC_IP'\"/g' /etc/kamailio/kamailio.cfg 
+        sed -i 's/#!define EXTERNAL_IP \s*.*/#!define EXTERNAL_IP  \"'$IP_GWBRIDGE'\"/g' /etc/kamailio/kamailio.cfg
         if test $? -ne 0
             then
             echo "ERROR: could not config kamailio"

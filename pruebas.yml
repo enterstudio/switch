@@ -15,12 +15,12 @@ services:
       - SUBNET_OVERLAY=192.168.1.0
       - SUFFIX_OVERLAY=int
       - SUFFIX_GWBRIDGE=ext
-#    volumes:
-#      - ./kamailio/config/kamailio:/etc/kamailio
+    volumes:
+      - ./kamailio/config/kamailio:/etc/kamailio
     ports:
       - "5060:5060/udp"
       - "5061:5061/udp"
-#    hostname: kamailio-h
+    hostname: kamailio
     extra_hosts:
       - "public_ip:10.128.19.60"
     container_name: kamailio

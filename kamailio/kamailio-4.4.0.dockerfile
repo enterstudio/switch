@@ -14,7 +14,7 @@ COPY /db/msilo-create.sql /usr/share/kamailio/mysql/msilo-create.sql
 COPY /db/topos-create.sql /usr/share/kamailio/mysql/topos-create.sql
 COPY /db/kamdbctl.base /usr/lib/kamailio/kamctl/kamdbctl.base
 COPY /config/kamailio/kamctlrc /etc/kamailio/kamctlrc
-#COPY /config/kamailio/kamailio.cfg /etc/kamailio/kamailio.cfg
+COPY /config/kamailio/kamailio.cfg /etc/kamailio/kamailio.cfg
 COPY /docker-entrypoint/kamailio-autoconfigure.sh /docker-entrypoint/kamailio-autoconfigure.sh
 
 EXPOSE 5060

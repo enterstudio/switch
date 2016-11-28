@@ -417,9 +417,9 @@ modparam("presence_xml", "force_active", 1)
 
 #!ifdef WITH_NAT
 # ----- rtpproxy params -----
-#modparam("rtpproxy", "rtpproxy_sock", "udp:switch_rtpproxy_1:7711")
-modparam("rtpproxy", "db_url", DBURL)
-modparam("rtpproxy", "table_name", "rtpproxy")
+modparam("rtpproxy", "rtpproxy_sock", "udp:switch_rtpproxy_1:7711")
+#modparam("rtpproxy", "db_url", DBURL)
+#modparam("rtpproxy", "table_name", "rtpproxy")
 
 # ----- nathelper params -----
 modparam("nathelper", "natping_interval", 30)
