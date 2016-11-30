@@ -1,3 +1,3 @@
-USE `--DB_KAMAILIO--`;
+USE `kamailio_db`;
                       
-DELETE FROM --TABLE_RTPPROXY--  WHERE url='udp:--HOSTNAME--:--PORT_RTPPROXY--';
+DELETE FROM rtpproxy WHERE url='udp:switch_rtpproxy_1:7711';

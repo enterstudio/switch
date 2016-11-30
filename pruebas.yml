@@ -8,21 +8,21 @@ services:
       - db
       - rtpproxy
     environment:
-#      - constraint:node==D-RSC-SWT-DOC01
+      - constraint:node==D-RSC-SWT-DOC01
 #      - PUBLICIP=10.128.19.60
       - SWARM_MASTER_IP=10.128.19.60
       - SWARM_MASTER_PORT=3375
-      - SUBNET_OVERLAY=192.168.1.0
+      - SUBNET_OVERLAY=192.168.2.0
       - SUFFIX_OVERLAY=int
       - SUFFIX_GWBRIDGE=ext
-    volumes:
-      - ./kamailio/config/kamailio:/etc/kamailio
+#    volumes:
+#      - ./kamailio/config/kamailio:/etc/kamailio
     ports:
       - "5060:5060/udp"
       - "5061:5061/udp"
     hostname: kamailio
-    extra_hosts:
-      - "public_ip:10.128.19.60"
+#    extra_hosts:
+#      - "public_ip:10.128.19.60"
     container_name: kamailio
 #    command: top
     networks:
@@ -47,10 +47,11 @@ services:
       - SWARM_MASTER_PORT=3375
 #      - PUBLIC_IP=10.128.19.60
       ########################################################################
-      - PORT_MAX=10099
+      - PORT_MAX=10005
+#      - PORT_MAX=10099
       - PORT_MIN=10000
 #      - TIMEOUT=1000
-      - SUBNET_OVERLAY=192.168.1.0
+      - SUBNET_OVERLAY=192.168.2.0
       - SUFFIX_OVERLAY=int
       - SUFFIX_GWBRIDGE=ext
       - PORT_RTPPROXY=7711
@@ -67,7 +68,13 @@ services:
 #    command: top
     ports:
       # - "10000-10399:10000-10399/udp"
-      - "10000-10099/udp"
+#      - "10000-10099/udp"
+      - "10000:10000/udp"
+      - "10001:10001/udp"
+      - "10002:10002/udp"
+      - "10003:10003/udp"
+      - "10004:10004/udp"
+      - "10005:10005/udp"
     expose:
       - "7711"
 #    hostname: rtpproxy-h
@@ -75,7 +82,7 @@ services:
     # extra_hosts:
     #   - "public_ip:10.128.19.60"
 #    volumes:
-#      - rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
+#      - ./rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
     dns:
       - 10.128.2.2
       - 10.128.2.3
@@ -112,6 +119,6 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 192.168.1.0/24
-          ip_range: 192.168.1.0/24
-          gateway: 192.168.1.1
+        - subnet: 192.168.2.0/24
+          ip_range: 192.168.2.0/24
+          gateway: 192.168.2.1

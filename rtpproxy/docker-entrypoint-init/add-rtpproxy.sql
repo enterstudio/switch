@@ -1,5 +1,5 @@
-USE `--DB_KAMAILIO--`;
+USE `kamailio_db`;
                       
-DELETE FROM --TABLE_RTPPROXY--  WHERE url='udp:--HOSTNAME--:--PORT_RTPPROXY--';
+DELETE FROM rtpproxy WHERE url='udp:switch_rtpproxy_1:7711';
                                                            
-INSERT INTO --TABLE_RTPPROXY--  (url) VALUES ('udp:--HOSTNAME--:--PORT_RTPPROXY--');
+INSERT INTO rtpproxy (url) VALUES ('udp:switch_rtpproxy_1:7711');

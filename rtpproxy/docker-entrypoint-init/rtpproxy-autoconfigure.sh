@@ -75,8 +75,7 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
     DOCKER_HOST_NAME=$(docker -H $SWARM_MASTER_IP:$SWARM_MASTER_PORT ps -a | awk '/'$HOSTNAME_EXTERNAL_OVERLAY'/ {split ($NF,a,"/"); print a[1]}')
     PUBLIC_IP=$(host $DOCKER_HOST_NAME | awk '/address/{split ($4,a," "); print a[1]}')
-    RTPPROXY_OPTS=$(echo "-A $PUBLIC_IP/$IP_GWBRIDGE -F -f -l $IP_OVERLAY/$IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:*:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")  
-
+    RTPPROXY_OPTS=$(echo "-f -u rtpproxy:rtpproxy -A $PUBLIC_IP -l $IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:$IP_OVERLAY:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")
     # UPDATE /etc/hosts
     if ! [ -f $HOSTS_FILE_BACKUP ]
         then
