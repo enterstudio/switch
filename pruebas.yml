@@ -127,8 +127,8 @@ services:
 #    container_name: rtpproxy
     # extra_hosts:
     #   - "public_ip:10.128.19.60"
-#    volumes:
-#      - ./rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
+    volumes:
+      - ./rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
 #      - ./rtpproxy/pcap:/pcap
     dns:
       - 10.128.2.2

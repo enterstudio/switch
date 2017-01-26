@@ -87,15 +87,18 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     cat $HOSTS_FILE_AUX > $HOSTS_FILE
        
     # UPDATE DATABASE
+    cp /docker-entrypoint-init/add-rtpproxy.sql.ori /docker-entrypoint-init/add-rtpproxy.sql
+    cp /docker-entrypoint-init/del-rtpproxy.sql.ori /docker-entrypoint-init/del-rtpproxy.sql
+
     sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' add-rtpproxy.sql
     sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' add-rtpproxy.sql
     sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' add-rtpproxy.sql
-    sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
+    sed -i 's/--TABLE_RTPPROXY--/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
 
     sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' del-rtpproxy.sql
     sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' del-rtpproxy.sql
     sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' del-rtpproxy.sql
-    sed -i 's/--TABLE_RTPPROXY--\s/'$TABLE_RTPPROXY'/g' del-rtpproxy.sql
+    sed -i 's/--TABLE_RTPPROXY--/'$TABLE_RTPPROXY'/g' del-rtpproxy.sql
 
     mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < add-rtpproxy.sql
     if test $? -ne 0 
@@ -109,6 +112,8 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
             echo "ERROR: could not connect with kamailio"
             exit 1
         else
+          # START METRICS
+          sh /docker-entrypoint-init/rtpproxy-metric.sh $DOCKER_HOST_NAME $PUBLIC_IP $HOSTNAME_EXTERNAL_OVERLAY $IP_GWBRIDGE &
           # START RTPPROXY
           /usr/bin/rtpproxy $RTPPROXY_OPTS
           mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < del-rtpproxy.sql
