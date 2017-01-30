@@ -5,3 +5,5 @@ INSERT IGNORE INTO --TABLE_HOST-- (hostip, hostname) VALUES ('--PUBLIC_IP--','--
 INSERT IGNORE INTO --TABLE_CONTAINER-- (hostname, containername, type) VALUES ('--DOCKER_HOST_NAME--','--CONTAINER_NAME--','rtpproxy');
 
 INSERT IGNORE INTO --TABLE_METRIC-- (containername, metrictype, value, unit) VALUES ('--CONTAINER_NAME--','rtpproxy active ports','0','integer');
+
+INSERT IGNORE INTO --TABLE_METRIC-- (containername, metrictype, value, unit) VALUES ('--CONTAINER_NAME--','rtpproxy free ports','--TOTAL_PORTS--','integer');
