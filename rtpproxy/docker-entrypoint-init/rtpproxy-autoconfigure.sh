@@ -73,6 +73,7 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     cat $RESOLV_FILE_AUX > $RESOLV_FILE
 
     HOSTNAME_EXTERNAL_OVERLAY=$(host $IP_OVERLAY | awk '/pointer/{split($5,a,"."); print a[1]}')
+    ID=$(echo $HOSTNAME_EXTERNAL_OVERLAY | awk '/''/ {split ($NF,a,"_"); print a[3]}')
     DOCKER_HOST_NAME=$(docker -H $SWARM_MASTER_IP:$SWARM_MASTER_PORT ps -a | awk '/'$HOSTNAME_EXTERNAL_OVERLAY'/ {split ($NF,a,"/"); print a[1]}')
     PUBLIC_IP=$(host $DOCKER_HOST_NAME | awk '/address/{split ($4,a," "); print a[1]}')
     RTPPROXY_OPTS=$(echo "-f -u rtpproxy:rtpproxy -A $PUBLIC_IP -l $IP_GWBRIDGE -m $PORT_MIN -M $PORT_MAX -s udp:$IP_OVERLAY:$PORT_RTPPROXY -d DBUG:LOG_LOCAL0")
@@ -94,6 +95,7 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
     sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' add-rtpproxy.sql
     sed -i 's/--PORT_RTPPROXY--\s*/'$PORT_RTPPROXY'/g' add-rtpproxy.sql
     sed -i 's/--TABLE_RTPPROXY--/'$TABLE_RTPPROXY'/g' add-rtpproxy.sql
+    sed -i 's/--ID--/'$ID'/g' add-rtpproxy.sql
 
     sed -i 's/--HOSTNAME--\s*/'$HOSTNAME_EXTERNAL_OVERLAY'/g' del-rtpproxy.sql
     sed -i 's/--DB_KAMAILIO--\s*/'$DB_KAMAILIO'/g' del-rtpproxy.sql

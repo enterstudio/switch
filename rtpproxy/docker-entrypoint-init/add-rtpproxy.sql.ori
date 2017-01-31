@@ -1,6 +1,8 @@
 USE '--DB_KAMAILIO--';
                       
 DELETE FROM --TABLE_RTPPROXY-- WHERE url='udp:--HOSTNAME--:--PORT_RTPPROXY--';
+
+UPDATE --TABLE_RTPPROXY-- SET weight=100;
                                                            
-INSERT INTO --TABLE_RTPPROXY-- (url) VALUES ('udp:--HOSTNAME--:--PORT_RTPPROXY--');
+INSERT INTO --TABLE_RTPPROXY-- (id,weight,url) VALUES (--ID--,1,'udp:--HOSTNAME--:--PORT_RTPPROXY--');
 
