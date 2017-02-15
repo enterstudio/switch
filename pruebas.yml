@@ -130,6 +130,7 @@ services:
     volumes:
       - ./rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
 #      - ./rtpproxy/pcap:/pcap
+      - ./rtpproxy/metric:/metric
     dns:
       - 10.128.2.2
       - 10.128.2.3

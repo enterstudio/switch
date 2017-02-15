@@ -1,5 +1,0 @@
-USE '--DB_METRIC--';
-
-UPDATE --TABLE_METRIC-- SET value=--ACTIVE_PORTS--, timestmp=CURRENT_TIMESTAMP WHERE containername='--CONTAINER_NAME--' AND metrictype='rtpproxy active ports';
-
-UPDATE --TABLE_METRIC-- SET value=--FREE_PORTS--, timestmp=CURRENT_TIMESTAMP WHERE containername='--CONTAINER_NAME--' AND metrictype='rtpproxy free ports';

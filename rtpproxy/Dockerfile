@@ -22,13 +22,6 @@ ENV SWARM_MASTER_IP=10.128.19.60 \
     SSH_KAMAILIO_USER=root \
     KAMAILIO_HOST=kamailio \
 
-    DB_METRIC=metric_db \
-    TABLE_HOST=host \
-    TABLE_CONTAINER=container \
-    TABLE_METRIC=metric \
-    DB_USER_METRIC=metric_user \
-    DB_PWD_METRIC=metricpwd \
-
     METRIC_PERIOD=0.01
 
 RUN apk add --update rtpproxy mysql-client sipcalc bind bind-tools openssh-client sshpass && rm -rf /var/cache/apk/*

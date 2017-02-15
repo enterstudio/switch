@@ -115,7 +115,7 @@ if [ $COUNT_ETH -eq $NUM_ETH ]
             exit 1
         else
           # START METRICS
-          sh /docker-entrypoint-init/rtpproxy-metric.sh $DOCKER_HOST_NAME $PUBLIC_IP $HOSTNAME_EXTERNAL_OVERLAY $IP_GWBRIDGE &
+          sh /docker-entrypoint-init/rtpproxy-metric.sh $IP_GWBRIDGE &
           # START RTPPROXY
           /usr/bin/rtpproxy $RTPPROXY_OPTS
           mysql -u$DB_USER -p$DB_PWD -h$DB_HOST < del-rtpproxy.sql
