@@ -8,9 +8,9 @@ do
     ACTIVE_PORTS=$(netstat -na | grep -c $IP_GWBRIDGE)
     FREE_PORTS=$(expr $TOTAL_PORTS - $ACTIVE_PORTS)
 
-    echo "Active Ports: $ACTIVE_PORTS" > /metric/ports.metric
-    echo "Free Ports: $FREE_PORTS" >> /metric/ports.metric
-    echo "Total ports: $TOTAL_PORTS" >> /metric/ports.metric
+    echo "Active_Ports: $ACTIVE_PORTS
+Free_Ports: $FREE_PORTS
+Total_Ports: $TOTAL_PORTS" >> /metric/ports.metric
 
     sleep $METRIC_PERIOD
 done

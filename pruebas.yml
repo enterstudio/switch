@@ -130,7 +130,7 @@ services:
     volumes:
       - ./rtpproxy/docker-entrypoint-init:/docker-entrypoint-init
 #      - ./rtpproxy/pcap:/pcap
-      - ./rtpproxy/metric:/metric
+      - ./metric:/metric
     dns:
       - 10.128.2.2
       - 10.128.2.3
@@ -161,6 +161,37 @@ services:
 #        aliases:
 #          - db
 
+  monitor-master:
+    image: salmant/salman_monitoring_server_container_image
+    restart: always
+    environment:
+      - constraint:node==D-RSC-SWT-DOC01
+    ports:
+      - "8080:8080"
+      - "4242:4242"
+      - "4245:4245"
+      - "7199:7199"
+      - "7000:7000"
+      - "7001:7001"
+      - "9160:9160"
+      - "9042:9042"
+      - "8012:8012"
+      - "61621:61621"
+
+  monitor-agent:
+    build: ./probe/monitor-agent-wt.dockerfile
+#    image: salmant/monitoring_agent
+    restart: always
+    depends_on: 
+      - monitor-master
+    environment:
+      - constraint:node==D-RSC-SWT-DOC02
+    ports:
+      - "4242:4242"
+      - "4245:4245"
+    command: --monitoringServerIP=10.128.19.60
+    volumes:
+      - ./metric:/metric
 networks:
   uc-ol:
     driver: overlay
